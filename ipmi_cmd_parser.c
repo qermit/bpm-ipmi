@@ -25,6 +25,7 @@
 #include "include/sensor_sdr.h"
 #include "include/payload_mgr.h"
 
+//#define IPMI_DBG
 
 //#ifdef AMC_CPU_COM_Express
 //volatile uint8_t commExpressLoggedIn = 0x00;
@@ -115,16 +116,19 @@ uint8_t ipmi_req_parser(event eventID, void* parg)
 
   // check response message length--if zero, it has been trapped as a bad or as-yet-unsupported
   // message
-  if (rspmsg.len)
-  	ipmb_send_response(&rspmsg);
+  if (rspmsg.len){
+      ipmb_send_response(&rspmsg);
+
+      #ifdef IPMI_DBG
+        ipmb_msg_dump(preq, TXTFILT_DBG_DETAIL);
+      #endif
+  }
   else {
   	sio_filt_putstr(TXTFILT_DBG_SUMMARY, 1, "?Invalid or Unsupported Request Message:\n");
-
   	ipmb_msg_dump(preq, TXTFILT_DBG_DETAIL);
-    rspmsg.len = IPMBRSPOVHEAD;			// put length back
-    IPMI_RS_CCODE(rspmsg.buf) = IPMI_RS_INVALID_CMD;
-
-    ipmb_send_response(&rspmsg);
+        rspmsg.len = IPMBRSPOVHEAD;			// put length back
+        IPMI_RS_CCODE(rspmsg.buf) = IPMI_RS_INVALID_CMD;
+        ipmb_send_response(&rspmsg);
   }
 
   return (1);					// callback stays resident
