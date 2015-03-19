@@ -12,6 +12,8 @@
 #include "../stdPeriphLibs/lpc17xx_i2c.h"
 #include "../stdPeriphLibs/lpc17xx_pinsel.h"
 
+#include "../include/sio_usart.h"
+
 volatile char txBuff[100];
 volatile uint8_t* txptr;
 volatile ipmi_i2c_state_record_t ipmi_i2c_state;
@@ -161,21 +163,22 @@ void I2C0_IRQHandler( void )
      ipmi_i2c_xmtcnt--;                                          // decrement transmit count
 
      I2CDAT_WRITE( curbyte );                                // send destination address (write operation)
-     I2CCONCLR( I2C_CTRL_FL_SI | I2C_CTRL_FL_STA );
+     I2CCONCLR( I2C_CTRL_FL_SI | I2C_CTRL_FL_STA | I2C_CTRL_FL_STO );
 
      break;
 
    case I2STAT_SLAW_SENT_NOT_ACKED:
      ipmi_i2c_start_slave_listen();
+     ipmb_service( );
      I2CCONCLR( I2C_CTRL_FL_SI );
 
      break;
 
    case I2STAT_REP_START_SENT:
      /* not supported - we should not be here */
-     I2CCONSET( I2C_CTRL_FL_STO );
-     I2CCONCLR( I2C_CTRL_FL_SI );
-
+     ipmi_i2c_start_slave_listen();
+     //I2CCONSET( I2C_CTRL_FL_STO );
+     //I2CCONCLR( I2C_CTRL_FL_SI );
      break;
 
    case I2STAT_ARBITRATION_LOST:
@@ -209,7 +212,7 @@ void I2C0_IRQHandler( void )
 
      I2CDAT_WRITE( curbyte );                                                // write first data byte--this should start ipmi_i2c transfer
 
-     I2CCONCLR( I2C_CTRL_FL_SI );
+     I2CCONCLR( I2C_CTRL_FL_SI | I2C_CTRL_FL_STA | I2C_CTRL_FL_STO );
 
      break;
 
@@ -246,16 +249,15 @@ void I2C0_IRQHandler( void )
            ipmi_i2c_start_slave_listen();                                             // go back to slave mode listening
 
        }
-
      break;
 
    case I2STAT_MASTER_DATA_SENT_NOT_ACKED:
      /* Data has been transmitted, NOT ACK received.
       * Send a STOP condition & enter not adressed slave mode.
       */
-
-     I2CCONSET( I2C_CTRL_FL_AA | I2C_CTRL_FL_STO );
-     I2CCONCLR( I2C_CTRL_FL_SI );
+     ipmi_i2c_start_slave_listen();
+//     I2CCONSET( I2C_CTRL_FL_AA | I2C_CTRL_FL_STO );
+     I2CCONCLR( I2C_CTRL_FL_SI | I2C_CTRL_FL_STO | I2C_CTRL_FL_STA);
 
      break;
 
@@ -340,14 +342,16 @@ void I2C0_IRQHandler( void )
      I2CCONSET( I2C_CTRL_FL_AA );
      I2CCONCLR( I2C_CTRL_FL_SI );
      ipmi_i2c_start_slave_listen( );                                              // switch back to slave mode for awhile
-     //ipmb_service();
+ //    ipmb_service();
 
      break;
 
    default:
-     ipmi_i2c_start_slave_listen( );                                              // switch back to slave mode for awhile
+     ipmi_i2c_start_slave_listen( );  // switch back to slave mode for awhile
+
      break;
    }
+// ipmb_service();
 }
 
 
@@ -687,9 +691,9 @@ int OK_to_enter_master_mode(void)
   Int_Disable(giflag);
 
   if ((ipmi_i2c_state.state == slave_listen) && (ipmi_i2c_state.master_holdoff_cnt == 0) && (eor_xcnt > 0))
-        retval = 1;
+    retval = 1;
   else
-        retval = 0;
+    retval = 0;
   Int_Restore(giflag);
   return (retval);
 }
@@ -796,3 +800,4 @@ void get_ipmb_address(volatile unsigned char* ipmbl_addr, volatile unsigned char
   *ipmbl_addr = 0xff;
   *slotid = 0xff;
 }
+
