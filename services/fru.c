@@ -5,6 +5,7 @@
 #include "../include/mmc_version.h"
 #include "../include/cardType.h"
 
+//#define PCIE_GEN2
 
 volatile uint8_t fru_buf[END_OF_FRU_AREA_OFFSET];
 
@@ -266,9 +267,59 @@ void fru_init(void)
   pP2PCon->record_type = 1;	/* 1 = AMC Module */
   pP2PCon->conn_dev_id = 0;	/* Connected-device ID if Record Type = 0, Reserved, otherwise. */
   pP2PCon->ch_descr_count = 3;	/* AMC Channel Descriptor Count */
-	
-  // AMC Link configuration for PCIe 
+
+#ifdef PCIE_GEN2
+  // AMC Link configuration for PCIe GEN2
   
+  pP2PCon->amc_ch_descr0[0] = 0x00;//0xA4;
+  pP2PCon->amc_ch_descr0[1] = 0x00;//0x98;
+  pP2PCon->amc_ch_descr0[2] = 0x00;//0xF3;
+
+  pP2PCon->amc_ch_descr1[0] = 0xA4;//0xA4;
+  pP2PCon->amc_ch_descr1[1] = 0x98;//0x98;
+  pP2PCon->amc_ch_descr1[2] = 0xF3;//0xF3;
+
+  pP2PCon->amc_ch_descr2[0] = 0xA4;//0x28;
+  pP2PCon->amc_ch_descr2[1] = 0x98;//0xA9;
+  pP2PCon->amc_ch_descr2[2] = 0xF3;//0xF5;
+
+  pP2PCon->amc_link_descr0[0] = 0x00;//0x00;
+  pP2PCon->amc_link_descr0[1] = 0x2F;
+  pP2PCon->amc_link_descr0[2] = 0x20;//0x00;
+  pP2PCon->amc_link_descr0[3] = 0x00;//0x01;
+  pP2PCon->amc_link_descr0[4] = 0xFD;//0xFD;
+
+  pP2PCon->amc_link_descr1[0] = 0x00;//0x00;
+  pP2PCon->amc_link_descr1[1] = 0x2F;
+  pP2PCon->amc_link_descr1[2] = 0x20;//0x00;
+  pP2PCon->amc_link_descr1[3] = 0x00;//0x01;
+  pP2PCon->amc_link_descr1[4] = 0xFD;//0xFD;
+
+  pP2PCon->amc_link_descr2[0] = 0x00;//0x01;
+  pP2PCon->amc_link_descr2[1] = 0x23;//0x2F;
+  pP2PCon->amc_link_descr2[2] = 0x20;//0x00;
+  pP2PCon->amc_link_descr2[3] = 0x00;//0x01;
+  pP2PCon->amc_link_descr2[4] = 0xFD;//0xFD;
+
+  pP2PCon->amc_link_descr3[0] = 0x00;//0x00;
+  pP2PCon->amc_link_descr3[1] = 0x23;//0x2F;
+  pP2PCon->amc_link_descr3[2] = 0x20;//0x00;
+  pP2PCon->amc_link_descr3[3] = 0x00;//0x00;
+  pP2PCon->amc_link_descr3[4] = 0xFD;//0xFD;
+
+  pP2PCon->amc_link_descr4[0] = 0x01;//0x00;
+  pP2PCon->amc_link_descr4[1] = 0x21;//0x23;
+  pP2PCon->amc_link_descr4[2] = 0x20;//0x00;
+  pP2PCon->amc_link_descr4[3] = 0x00;//0x00;
+  pP2PCon->amc_link_descr4[4] = 0xFD;//0xFD;
+
+  pP2PCon->amc_link_descr5[0] = 0x01;//0x00;
+  pP2PCon->amc_link_descr5[1] = 0x21;//0x21;
+  pP2PCon->amc_link_descr5[2] = 0x20;//0x00;
+  pP2PCon->amc_link_descr5[3] = 0x00;//0x00;
+  pP2PCon->amc_link_descr5[4] = 0xFD;//0xFD;
+#else
+  // AMC Link configuration for PCIe GEN1
   pP2PCon->amc_ch_descr0[0] = 0x00;//0xA4;
   pP2PCon->amc_ch_descr0[1] = 0x00;//0x98;
   pP2PCon->amc_ch_descr0[2] = 0x00;//0xF3;
@@ -316,6 +367,7 @@ void fru_init(void)
   pP2PCon->amc_link_descr5[2] = 0x10;//0x00;
   pP2PCon->amc_link_descr5[3] = 0x00;//0x00;
   pP2PCon->amc_link_descr5[4] = 0xFD;//0xFD;
+#endif
 
   pP2PCon->record_cksum =  calc_ipmi_xsum( ( uint8_t * )&( pP2PCon->manuf_id[0] ), 47 );
   pP2PCon->header_cksum = calc_ipmi_xsum( ( uint8_t * )&( pP2PCon->record_type_id ), 4);
@@ -330,7 +382,7 @@ void fru_init(void)
   pcurrec->mfgID_MSB = 0x00;
   pcurrec->PICMG_recID = 0x16;				// current requirements record
   pcurrec->record_fmt_version = 0x00;
-  pcurrec->current_draw_100mA = 60;			// say 2A for now
+  pcurrec->current_draw_100mA = 80;			// say 2A for now
   pcurrec->hdr.recxsum = calc_ipmi_xsum((uint8_t*) &(pcurrec->mfgID_LSB), 6);
   pcurrec->hdr.hdrxsum = calc_ipmi_xsum((uint8_t*) &(pcurrec->hdr.rectypeID), 4);
 
