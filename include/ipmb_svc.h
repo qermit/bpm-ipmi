@@ -43,8 +43,8 @@
 
 // request message table
 #define REQ_MSG_TBL_SIZE                        (8)                     // size of request message table
-#define REQ_MSG_TIMEOUT_LIMIT           (3)            // 100 ms ticks until message times out
-#define REQ_MSG_XMT_TRY_LIMIT           (3)                     // max number of times message transmitted until we give up
+#define REQ_MSG_TIMEOUT_LIMIT           (2)            // 100 ms ticks until message times out
+#define REQ_MSG_XMT_TRY_LIMIT           (1)                     // max number of times message transmitted until we give up
 
 
 typedef uint8_t(*ptrMsgCallback)(void*, void*);
@@ -68,7 +68,7 @@ typedef struct {
 
 
 
-uint8_t calc_ipmi_xsum(const volatile uint8_t* pbuf, uint16_t len);
+unsigned char calc_ipmi_xsum(const unsigned char* pbuf, unsigned short len);
 
 void ipmb_init_req_hdr(volatile uint8_t* pmsg, volatile uint8_t rsSA, volatile uint8_t netFn,
                        volatile uint8_t rsLUN, volatile uint8_t rqLUN);
