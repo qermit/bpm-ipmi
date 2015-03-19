@@ -530,6 +530,25 @@ void sendSPIdata( uint16_t address, uint32_t data )
                 Tx_buff[6] = ( data & 0xff );
 
                 sendSPIbuff(&Tx_buff[0]);
+
+
+                uint32_t tmp = 0;
+                tmp  = gpio_get_pin_value(14, 1);
+                tmp |= (gpio_get_pin_value(15, 1)<<1);
+                tmp |= (gpio_get_pin_value(16, 1)<<2);
+                tmp |= (gpio_get_pin_value(17, 1)<<3);
+                tmp |= (gpio_get_pin_value(18, 1)<<4);
+                tmp |= (gpio_get_pin_value(19, 1)<<5);
+
+                Tx_buff[0] = WR_COMMAND;
+                Tx_buff[1] = 0x00;
+                Tx_buff[2] = 0xff;
+                Tx_buff[3] = ( ( tmp >> 24) & 0xff );
+                Tx_buff[4] = ( ( tmp >> 16) & 0xff );
+                Tx_buff[5] = ( ( tmp >> 8)  & 0xff );
+                Tx_buff[6] = ( tmp & 0xff );
+
+                sendSPIbuff(&Tx_buff[0]);
       }
 }
 
