@@ -81,11 +81,11 @@ void ipmb_init_rsp_hdr(volatile uint8_t* pmsg, const volatile uint8_t* preq)
 }
 
 
-uint8_t calc_ipmi_xsum(const volatile uint8_t* pbuf, uint16_t len)
+unsigned char calc_ipmi_xsum(const unsigned char* pbuf, unsigned short len)
 {
-  volatile uint8_t  sum     = 0;
-  const volatile uint8_t* pcur    = pbuf;
-  volatile uint16_t  remlen  = len;
+  unsigned char  sum     = 0;
+  const unsigned char* pcur    = pbuf;
+  volatile unsigned short  remlen  = len;
 
   while (remlen)
   {
