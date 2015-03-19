@@ -220,6 +220,17 @@ void gpio_init() {
   GPIO_SetDir(0, 0x01<<9, INPUT);
 #endif
 
+  ///////////////////////////////////////
+  //FMC STATUS PORTS
+  ///////////////////////////////////////
+  GPIO_SetDir(1, 0x1<<14, INPUT);
+  GPIO_SetDir(1, 0x1<<15, INPUT);
+  GPIO_SetDir(1, 0x1<<16, INPUT);
+  GPIO_SetDir(1, 0x1<<17, INPUT);
+  GPIO_SetDir(1, 0x1<<18, INPUT);
+  GPIO_SetDir(1, 0x1<<19, INPUT);
+  ///////////////////////////////////////
+
 }
 
 
