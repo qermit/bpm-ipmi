@@ -25,7 +25,7 @@
 #include "include/sensor_sdr.h"
 #include "include/payload_mgr.h"
 
-//#define IPMI_DBG
+#define IPMI_DBG
 
 //#ifdef AMC_CPU_COM_Express
 //volatile uint8_t commExpressLoggedIn = 0x00;
@@ -120,7 +120,10 @@ uint8_t ipmi_req_parser(event eventID, void* parg)
       ipmb_send_response(&rspmsg);
 
       #ifdef IPMI_DBG
+        sio_putstr("\nIPMI Request:\n");
         ipmb_msg_dump(preq, TXTFILT_DBG_DETAIL);
+        sio_putstr("\nIPMI Response:\n");
+        ipmb_msg_dump(&rspmsg, TXTFILT_DBG_DETAIL);
       #endif
   }
   else {
