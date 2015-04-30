@@ -35,6 +35,8 @@ __CRP const unsigned int CRP_WORD = CRP_NO_CRP ;
 
 #include "include/iap_driver.h"
 
+#include "include/ssp_flash.h"
+
 #include "stdPeriphLibs/lpc_types.h"
 
 int main(void)
@@ -58,6 +60,18 @@ int main(void)
   timer_callback_init();
   ///Serial port initialization. It will be used as IPMI console.\n
   sio_init();
+  //SSP port initialization, used to r/w in the Flash.\n
+  ssp_init();
+
+  #ifdef FLASH_DBG
+  N25Q_ReadID_t id;
+  sio_putstr("\nFlash access test!\n");
+  id = n25q_readid();
+  sio_putstr("Flash ID Read successfully!\n");
+  sprintf(spbuf, "Man ID= %02Xh  - Memory size= %02Xh  - Memory Type= %02Xh\n", id.Man_ID, id.Dev_ID.mem_size, id.Dev_ID.mem_type);
+  sio_putstr(spbuf);
+  #endif
+
   ///Initialize I2C bus (IPMB) to communicate with MCH.\n
   ipmi_i2c_init( );
 
