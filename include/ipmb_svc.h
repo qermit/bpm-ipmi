@@ -52,6 +52,7 @@ typedef uint8_t(*ptrMsgCallback)(void*, void*);
 typedef struct {
   uint8_t buf[IPMIMAXMSGLEN];
   unsigned short len;
+  unsigned long systime;
 } ipmb_msg_desc_t;
 
 

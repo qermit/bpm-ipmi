@@ -102,6 +102,10 @@ void timer_callback_init(void) {
         TMR0_Match.MatchChannel = 0;
 	/* Set configuration for Tim_config and Tim_MatchConfig */
 	TIM_Init(LPC_TIM0, TIM_TIMER_MODE, &TMR0_Cfg);
+	TIM_Init(LPC_TIM3, TIM_TIMER_MODE, &TMR0_Cfg);
+
+
+
 	TIM_ConfigMatch(LPC_TIM0, &TMR0_Match);
 
         NVIC_SetPriorityGrouping(TIMER0_PriorGrup);

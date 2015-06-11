@@ -25,7 +25,7 @@ unsigned int get_ipmi_i2c_rcv_msg_cnt(void);
 
 short get_ipmi_i2c_rcv_next_msg_len(void);
 
-unsigned int get_ipmi_i2c_msg(volatile unsigned char* rbuf, volatile unsigned short* rlen, volatile unsigned short bufsize);
+unsigned int get_ipmi_i2c_msg(volatile unsigned char* rbuf, volatile unsigned short* rlen, volatile unsigned short bufsize, uint32_t * timestamp);
 
 unsigned int put_ipmi_i2c_msg(volatile unsigned char* xbuf, volatile unsigned short xlen);
 

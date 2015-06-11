@@ -119,7 +119,7 @@ static void check_incoming_msgs(void)
   // zero out message buffer before get
   memset((void*) curmsg.buf, 0, sizeof(curmsg.buf));
 
-  if (!get_ipmi_i2c_msg(curmsg.buf, &curmsg.len, IPMIMAXMSGLEN))
+  if (!get_ipmi_i2c_msg(curmsg.buf, &curmsg.len, IPMIMAXMSGLEN, &curmsg.systime))
     // queue empty
     return;
 

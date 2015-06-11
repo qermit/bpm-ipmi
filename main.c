@@ -37,6 +37,8 @@ __CRP const unsigned int CRP_WORD = CRP_NO_CRP ;
 
 #include "stdPeriphLibs/lpc_types.h"
 
+#include "include/debug_pins.h"
+
 int main(void)
 {
 
@@ -53,6 +55,7 @@ int main(void)
 
   ///uC pins assignments according to their function.\n
   gpio_init();
+  debug_pins_init();
   ///Prepare main timer
   ///NOTICE! Timer is not enable after this function.\n
   timer_callback_init();
@@ -69,9 +72,11 @@ int main(void)
 
   Enable_global_interrupt();
 
+  debug_pins_set(1,1);
   sio_putstr("\nIPMI MODULE MANAGEMENT\n");
   sprintf(spbuf, "uTCA Slot=%i  IPMB-L ADDR=%02Xh\n", ipmi_i2c_state.slotid, ipmi_i2c_state.ipmbl_addr);
   sio_putstr(spbuf);
+  debug_pins_set(1,0);
 
   ///Initialize diagnostic monitor.\n
   //initDiagnosticMonitor();

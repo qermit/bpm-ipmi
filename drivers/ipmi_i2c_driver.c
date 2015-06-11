@@ -13,6 +13,7 @@
 #include "../stdPeriphLibs/lpc17xx_pinsel.h"
 
 #include "../include/sio_usart.h"
+#include "../include/rtc.h"
 
 volatile char txBuff[100];
 volatile uint8_t* txptr;
@@ -23,6 +24,7 @@ volatile ipmi_i2c_state_record_t ipmi_i2c_state;
 // storage for xmt and rcv queue end-of-record buffers
 short eor_xbuf[EORBUFSIZE];
 short eor_rbuf[EORBUFSIZE];
+uint32_t eor_rbuf_stamp[EORBUFSIZE];
 short eor_xcnt = 0;
 short eor_xwidx = 0;
 short eor_xridx = 0;
@@ -163,6 +165,7 @@ void I2C0_IRQHandler( void )
      ipmi_i2c_xmtcnt--;                                          // decrement transmit count
 
      I2CDAT_WRITE( curbyte );                                // send destination address (write operation)
+     debug_pins_toggle(0);
      I2CCONCLR( I2C_CTRL_FL_SI | I2C_CTRL_FL_STA | I2C_CTRL_FL_STO );
 
      break;
@@ -240,6 +243,8 @@ void I2C0_IRQHandler( void )
          // nothing more to send, arm the transmit complete interrupt
          I2CCONSET( I2C_CTRL_FL_AA | I2C_CTRL_FL_STO );
          I2CCONCLR( I2C_CTRL_FL_SI );
+
+         debug_pins_toggle(1);
 
          if (ipmi_i2c_state.state == master_write)
            unload_xmt_msg();                                                             // removed completed message from transmit queue
@@ -387,6 +392,14 @@ unsigned int get_ipmi_i2c_rcv_msg_cnt(void)
   return ( (unsigned int) eor_rcnt );
 }
 
+uint32_t get_ipmi_i2c_rcv_next_msg_timestamp(void)
+{
+	  if (!eor_rcnt)
+	        return (0);
+
+	  return eor_rbuf_stamp[eor_rridx];
+
+}
 
 short get_ipmi_i2c_rcv_next_msg_len(void)
 {
@@ -431,7 +444,7 @@ static short get_ipmi_i2c_xmt_next_msg_len(void)
 }
 
 
-unsigned int get_ipmi_i2c_msg(volatile unsigned char* rbuf, volatile unsigned short* rlen, volatile unsigned short bufsize)
+unsigned int get_ipmi_i2c_msg(volatile unsigned char* rbuf, volatile unsigned short* rlen, volatile unsigned short bufsize, uint32_t * timestamp)
 {
   // check receive message queue, and copy oldest message to the supplied buffer
   // returns 1 if message is dequeued and copied, and 0 if there is no message
@@ -461,6 +474,9 @@ unsigned int get_ipmi_i2c_msg(volatile unsigned char* rbuf, volatile unsigned sh
           getcnt++;
       }
   *rlen = getcnt;
+  *timestamp = get_ipmi_i2c_rcv_next_msg_timestamp();
+ // debug_pins_set(1,0);
+
 //////////////////////////////////////////////////////
 //       It could make system hang
 //////////////////////////////////////////////////////
@@ -519,8 +535,10 @@ unsigned int put_ipmi_i2c_msg(volatile unsigned char* xbuf, volatile unsigned sh
   put_xmt_eor(ipmi_i2c_xwidx);                       // this is index of last byte to be written to queue
   put_xmt_byte(*bptr);
 
-  if (OK_to_enter_master_mode())
+  if (OK_to_enter_master_mode()) {
+	//debug_pins_set(0,1);
     ipmi_i2c_start_master_mode_write();
+  }
   Int_Restore(giflag);
   return (1);
 }
@@ -601,6 +619,8 @@ unsigned int chk_ipmi_i2c_xbuf_space(void) {
   Int_Disable(giflag);
 
   eor_rbuf[eor_rwidx] = eor_loc;
+  eor_rbuf_stamp[eor_rwidx] = get_rtc_value();
+ // debug_pins_set(1,1);
   eor_rcnt++;
   adv_buf_idx(eor_rwidx, EORBUFSIZE);
 
@@ -715,7 +735,7 @@ void ipmi_i2c_start_master_mode_write(void) {
 
   //Sending Start bit next steps will be done in IRQ
   Int_Restore(giflag);
-  I2CCONCLR( I2C_CTRL_FL_STO | I2C_CTRL_FL_AA  );
+  I2CCONCLR( I2C_CTRL_FL_STA | I2C_CTRL_FL_SI | I2C_CTRL_FL_STO | I2C_CTRL_FL_AA  );
   I2CCONSET( I2C_CTRL_FL_STA | I2C_CTRL_FL_I2EN );
 
 
@@ -790,8 +810,10 @@ void get_ipmb_address(volatile unsigned char* ipmbl_addr, volatile unsigned char
         pdectbl = &ga_decode_tbl[i1];
         if ((ipmi_i2c_state.ga0val == pdectbl->ga0) && (ipmi_i2c_state.ga1val == pdectbl->ga1) && (ipmi_i2c_state.ga2val == pdectbl->ga2)) {
           // have match
+        	printf("IPMI addr %02x\r\n", pdectbl->ipmb_addr);
           *ipmbl_addr = pdectbl->ipmb_addr;
           *slotid = pdectbl->slotid;
+
           return;
         }
   }
