@@ -260,6 +260,8 @@ void I2C0_IRQHandler( void )
      /* Data has been transmitted, NOT ACK received.
       * Send a STOP condition & enter not adressed slave mode.
       */
+
+	 debug_pins_toggle(0);
      ipmi_i2c_start_slave_listen();
 //     I2CCONSET( I2C_CTRL_FL_AA | I2C_CTRL_FL_STO );
      I2CCONCLR( I2C_CTRL_FL_SI | I2C_CTRL_FL_STO | I2C_CTRL_FL_STA);
