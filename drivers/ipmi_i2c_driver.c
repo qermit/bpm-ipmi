@@ -244,7 +244,7 @@ void I2C0_IRQHandler( void )
          I2CCONSET( I2C_CTRL_FL_AA | I2C_CTRL_FL_STO );
          I2CCONCLR( I2C_CTRL_FL_SI );
 
-         debug_pins_toggle(1);
+        // debug_pins_toggle(1);
 
          if (ipmi_i2c_state.state == master_write)
            unload_xmt_msg();                                                             // removed completed message from transmit queue
@@ -812,7 +812,7 @@ void get_ipmb_address(volatile unsigned char* ipmbl_addr, volatile unsigned char
         pdectbl = &ga_decode_tbl[i1];
         if ((ipmi_i2c_state.ga0val == pdectbl->ga0) && (ipmi_i2c_state.ga1val == pdectbl->ga1) && (ipmi_i2c_state.ga2val == pdectbl->ga2)) {
           // have match
-        	printf("IPMI addr %02x\r\n", pdectbl->ipmb_addr);
+        	//printf("IPMI addr %02x\r\n", pdectbl->ipmb_addr);
           *ipmbl_addr = pdectbl->ipmb_addr;
           *slotid = pdectbl->slotid;
 

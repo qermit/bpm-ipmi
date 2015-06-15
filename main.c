@@ -116,6 +116,8 @@ int main(void)
   while (1)
     {
       ipmb_service();
+
+      debug_pins_set(1,1);
       sensor_service();
       pyldmgr_service();
 
@@ -123,6 +125,7 @@ int main(void)
 
       //commented for test purposes
       checkCardStatus( );
+      debug_pins_set(1,0);
 
 
       /// <b>TEST SYSCLK</b>\n
