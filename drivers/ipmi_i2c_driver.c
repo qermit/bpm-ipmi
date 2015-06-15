@@ -812,7 +812,7 @@ void get_ipmb_address(volatile unsigned char* ipmbl_addr, volatile unsigned char
         pdectbl = &ga_decode_tbl[i1];
         if ((ipmi_i2c_state.ga0val == pdectbl->ga0) && (ipmi_i2c_state.ga1val == pdectbl->ga1) && (ipmi_i2c_state.ga2val == pdectbl->ga2)) {
           // have match
-        	printf("IPMI addr %02x\r\n", pdectbl->ipmb_addr);
+        	//printf("IPMI addr %02x\r\n", pdectbl->ipmb_addr);
           *ipmbl_addr = pdectbl->ipmb_addr;
           *slotid = pdectbl->slotid;
 
