@@ -22,14 +22,14 @@ volatile ipmi_i2c_state_record_t ipmi_i2c_state;
 #define EORBUFSIZE              (8)                             // number of elements in end-of-record buffers
 
 // storage for xmt and rcv queue end-of-record buffers
-short eor_xbuf[EORBUFSIZE];
-short eor_rbuf[EORBUFSIZE];
-uint32_t eor_rbuf_stamp[EORBUFSIZE];
-short eor_xcnt = 0;
+volatile short eor_xbuf[EORBUFSIZE];
+volatile short eor_rbuf[EORBUFSIZE];
+volatile uint32_t eor_rbuf_stamp[EORBUFSIZE];
+volatile short eor_xcnt = 0;
 short eor_xwidx = 0;
-short eor_xridx = 0;
-short eor_rcnt = 0;
-short eor_rwidx = 0;
+volatile short eor_xridx = 0;
+volatile short eor_rcnt = 0;
+volatile short eor_rwidx = 0;
 short eor_rridx = 0;
 
 #define IPMI_I2C_BUFSIZE      (256)                           // number of bytes in TWI transmit and receive buffers
@@ -38,15 +38,15 @@ short eor_rridx = 0;
 #define IPMI_CLK 100000
 
 // storage for ipmi_i2c xmt and rcv data buffers
-unsigned char ipmi_i2c_xbuf[IPMI_I2C_BUFSIZE];
-unsigned char ipmi_i2c_rbuf[IPMI_I2C_BUFSIZE];
-uint8_t ipmi_i2c_xcnt = 0;
+volatile unsigned char ipmi_i2c_xbuf[IPMI_I2C_BUFSIZE];
+volatile unsigned char ipmi_i2c_rbuf[IPMI_I2C_BUFSIZE];
+volatile uint8_t ipmi_i2c_xcnt = 0;
 uint8_t ipmi_i2c_xwidx = 0;
-uint8_t ipmi_i2c_xridx = 0;
-uint8_t ipmi_i2c_rcnt = 0;
-uint8_t ipmi_i2c_rwidx = 0;
+volatile uint8_t ipmi_i2c_xridx = 0;
+volatile uint8_t ipmi_i2c_rcnt = 0;
+volatile uint8_t ipmi_i2c_rwidx = 0;
 uint8_t ipmi_i2c_rridx = 0;
-uint8_t ipmi_i2c_xfirst, ipmi_i2c_xlast, ipmi_i2c_xcur, ipmi_i2c_xmtcnt;              // index variables for transmitting message off of the queue
+volatile uint8_t ipmi_i2c_xfirst, ipmi_i2c_xlast, ipmi_i2c_xcur, ipmi_i2c_xmtcnt;              // index variables for transmitting message off of the queue
 
 typedef struct {
   enum GApin ga2;
@@ -140,11 +140,11 @@ void I2C0_IRQHandler( void )
 {
   NVIC_ClearPendingIRQ(I2C0_IRQn);
 
- volatile short tempsh;
- volatile unsigned char curbyte;
- volatile uint32_t status;
+ short tempsh;
+ unsigned char curbyte;
+ uint32_t status;
 
- volatile unsigned char databyte;
+ unsigned char databyte;
 
  status = IPMI_I2C->I2STAT;
 
@@ -166,13 +166,13 @@ void I2C0_IRQHandler( void )
 
      I2CDAT_WRITE( curbyte );                                // send destination address (write operation)
      debug_pins_toggle(0);
-     I2CCONCLR( I2C_CTRL_FL_SI | I2C_CTRL_FL_STA | I2C_CTRL_FL_STO );
+     I2CCONCLR( I2C_CTRL_FL_SI | I2C_CTRL_FL_STA );
 
      break;
 
    case I2STAT_SLAW_SENT_NOT_ACKED:
      ipmi_i2c_start_slave_listen();
-     ipmb_service( );
+     //ipmb_service( );
      I2CCONCLR( I2C_CTRL_FL_SI );
 
      break;
@@ -244,14 +244,19 @@ void I2C0_IRQHandler( void )
          I2CCONSET( I2C_CTRL_FL_AA | I2C_CTRL_FL_STO );
          I2CCONCLR( I2C_CTRL_FL_SI );
 
-        // debug_pins_toggle(1);
+         debug_pins_toggle(0);
 
          if (ipmi_i2c_state.state == master_write)
            unload_xmt_msg();                                                             // removed completed message from transmit queue
+
+
          if (eor_xcnt)
            ipmi_i2c_start_master_mode_write();                                // transmit next message
-         else
-           ipmi_i2c_start_slave_listen();                                             // go back to slave mode listening
+         else {
+           ipmi_i2c_start_slave_listen_fromisr();                                             // go back to slave mode listening
+           I2CCONSET( I2C_CTRL_FL_AA | I2C_CTRL_FL_STO );
+           I2CCONCLR( I2C_CTRL_FL_SI);
+         }
 
        }
      break;
@@ -262,9 +267,12 @@ void I2C0_IRQHandler( void )
       */
 
 	 debug_pins_toggle(0);
-     ipmi_i2c_start_slave_listen();
+     ipmi_i2c_start_slave_listen_fromisr();
 //     I2CCONSET( I2C_CTRL_FL_AA | I2C_CTRL_FL_STO );
-     I2CCONCLR( I2C_CTRL_FL_SI | I2C_CTRL_FL_STO | I2C_CTRL_FL_STA);
+     I2CCONSET( I2C_CTRL_FL_AA | I2C_CTRL_FL_STO );
+     I2CCONCLR( I2C_CTRL_FL_SI);
+
+
 
      break;
 
@@ -688,6 +696,12 @@ unsigned int chk_ipmi_i2c_xbuf_space(void) {
   Int_Restore(giflag);
   return (retval);
 }
+
+
+ void ipmi_i2c_start_slave_listen_fromisr(void) {
+   // configure ipmi_i2c for slave mode listen
+   ipmi_i2c_state.state = slave_listen;
+ }
 
 
 void ipmi_i2c_start_slave_listen(void) {

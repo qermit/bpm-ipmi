@@ -13,7 +13,7 @@
 
 
 #define DBG_PIN_COUNT 2
-uint8_t dbg_pin_state[2];
+volatile uint8_t dbg_pin_state[2];
 
 
 void debug_pins_set(unsigned char pin, unsigned char value)
